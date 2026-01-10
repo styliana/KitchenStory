@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import useRecipes from '../hooks/useRecipes';
-import ImageUploader from '../components/recipes/ImageUploader';
-import { uploadImageToSupabase } from '../services/imageService';
 import { supabase } from '../lib/supabaseClient';
+import { uploadImageToSupabase } from '../services/imageService';
+
+// Import komponentów UI (Clean Code!)
+import ImageUploader from '../components/recipes/ImageUploader';
+import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
+import Textarea from '../components/ui/Textarea';
+import Button from '../components/ui/Button';
 
 const emptyIngredient = () => ({ name: '', amount: '', unit: '' });
 const CATEGORIES = ['Śniadanie', 'Obiad', 'Kolacja', 'Deser', 'Przekąska', 'Napój'];
 
 export default function AddRecipePage() {
-  const { addRecipe } = useRecipes(); // Do dodawania
+  const { addRecipe } = useRecipes();
   const navigate = useNavigate();
-  const { id } = useParams(); // Jeśli jest ID, to znaczy, że edytujemy
+  const { id } = useParams();
 
   // Stany formularza
   const [title, setTitle] = useState('');
@@ -22,14 +28,13 @@ export default function AddRecipePage() {
   
   // Stany techniczne
   const [imageFile, setImageFile] = useState(null);
-  const [existingImageUrl, setExistingImageUrl] = useState(null); // URL zdjęcia przy edycji
-  const [loadingData, setLoadingData] = useState(false); // Ładowanie danych do edycji
+  const [existingImageUrl, setExistingImageUrl] = useState(null);
+  const [loadingData, setLoadingData] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // --- 1. ŁADOWANIE DANYCH (JEŚLI EDYCJA) ---
+  // --- ŁADOWANIE DANYCH (EDYCJA) ---
   useEffect(() => {
     if (!id) return;
-    
     setLoadingData(true);
     async function fetchRecipeToEdit() {
       const { data, error } = await supabase
@@ -46,7 +51,7 @@ export default function AddRecipePage() {
         setSteps(data.steps || []);
         setExistingImageUrl(data.image_url);
       } else {
-        alert("Nie udało się pobrać przepisu lub nie masz praw do jego edycji.");
+        alert("Nie udało się pobrać danych.");
         navigate('/');
       }
       setLoadingData(false);
@@ -54,8 +59,7 @@ export default function AddRecipePage() {
     fetchRecipeToEdit();
   }, [id, navigate]);
 
-
-  // --- HANDLERY FORMULARZA (bez zmian) ---
+  // --- HANDLERY ---
   const handleIngredientChange = (index, key, value) => {
     setIngredients((prev) => prev.map((ing, i) => (i === index ? { ...ing, [key]: value } : ing)));
   };
@@ -66,12 +70,10 @@ export default function AddRecipePage() {
   const addStep = () => setSteps((prev) => [...prev, '']);
   const removeStep = (index) => setSteps((prev) => prev.filter((_, i) => i !== index));
 
-  // --- ZAPISYWANIE (DWA TRYBY) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      // 1. Czy wybrano nowe zdjęcie?
       let finalImageUrl = existingImageUrl;
       if (imageFile) {
         finalImageUrl = await uploadImageToSupabase(imageFile);
@@ -87,113 +89,185 @@ export default function AddRecipePage() {
       };
 
       if (id) {
-        // TRYB EDYCJI: Aktualizacja w bazie
-        const { error } = await supabase
-          .from('recipes')
-          .update(recipeData)
-          .eq('id', id);
-        
+        const { error } = await supabase.from('recipes').update(recipeData).eq('id', id);
         if (error) throw error;
       } else {
-        // TRYB DODAWANIA: Używamy starego hooka lub bezpośrednio supabase
-        // (Dla spójności użyjmy bezpośredniego insertu, bo hook useRecipes był prosty)
         const { error } = await supabase.from('recipes').insert(recipeData);
         if (error) throw error;
       }
 
-      navigate(id ? `/recipe/${id}` : '/'); // Wróć do detali lub na główną
+      navigate(id ? `/recipe/${id}` : '/');
     } catch (err) {
       console.error('Save failed', err);
-      alert('Wystąpił błąd. Sprawdź konsolę.');
+      alert('Błąd zapisu.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loadingData) return <div className="text-center py-20">Ładowanie danych...</div>;
+  if (loadingData) return <div className="text-center py-20 font-bold text-orange-400">Ładowanie składników...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-center">
+    <div className="max-w-3xl mx-auto pb-20">
+      <h2 className="text-4xl font-bold mb-8 text-center font-serif text-gray-800">
         {id ? 'Edytuj Przepis ✏️' : 'Nowy Przepis 🍳'}
       </h2>
       
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-lg border border-orange-100 space-y-8">
+      <form onSubmit={handleSubmit} className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-orange-100 space-y-10">
         
-        {/* Jeśli edytujemy i jest stare zdjęcie, pokazujemy je */}
-        {existingImageUrl && !imageFile && (
-           <div className="mb-4 text-center">
-             <p className="text-sm text-gray-400 mb-2">Obecne zdjęcie:</p>
-             <img src={existingImageUrl} alt="Obecne" className="h-32 mx-auto rounded-lg object-cover" />
-           </div>
-        )}
+        {/* Sekcja: ZDJĘCIE */}
+        <section>
+          {existingImageUrl && !imageFile && (
+             <div className="mb-6 relative group overflow-hidden rounded-2xl h-48 border border-orange-100">
+               <img src={existingImageUrl} alt="Obecne" className="w-full h-full object-cover" />
+               <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                 Obecne zdjęcie
+               </div>
+             </div>
+          )}
+          <ImageUploader onImageSelected={setImageFile} />
+        </section>
         
-        <ImageUploader onImageSelected={setImageFile} />
-        
-        <section className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Nazwa potrawy</label>
-            <input required placeholder="np. Szarlotka Babci Zosi" value={title} onChange={(e) => setTitle(e.target.value)} className="input-kitchen text-lg" />
-          </div>
+        {/* Sekcja: INFO */}
+        <section className="space-y-6">
+          <Input 
+            label="Nazwa potrawy"
+            required 
+            placeholder="np. Szarlotka Babci Zosi" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+          />
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Kategoria</label>
-              <select 
-                value={category} 
-                onChange={(e) => setCategory(e.target.value)} 
-                className="input-kitchen"
-              >
-                <option value="">-- Wybierz --</option>
-                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Info (czas, porcje)</label>
-              <input placeholder="np. 45 min, 4 osoby" value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} className="input-kitchen" />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Select 
+              label="Kategoria"
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)}
+              options={CATEGORIES}
+            />
+            <Input 
+              label="Info (czas, porcje)"
+              placeholder="np. 45 min, 4 osoby" 
+              value={additionalInfo} 
+              onChange={(e) => setAdditionalInfo(e.target.value)} 
+            />
           </div>
         </section>
 
         <hr className="border-orange-100" />
 
+        {/* Sekcja: SKŁADNIKI (TUTAJ BYŁ BRZYDKI INPUT) */}
         <section>
-          <div className="flex justify-between items-center mb-3">
-            <label className="block text-xl font-bold text-gray-800">Składniki</label>
-            <button type="button" onClick={addIngredientRow} className="text-sm font-bold text-orange-600">+ Dodaj</button>
+          <div className="flex justify-between items-end mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              🥦 Składniki
+            </h3>
+            <Button type="button" onClick={addIngredientRow} variant="secondary" className="text-xs py-1">
+              + Dodaj pozycję
+            </Button>
           </div>
-          <div className="space-y-3 bg-orange-50/50 p-4 rounded-xl">
+
+          <div className="space-y-3 bg-orange-50/40 p-6 rounded-2xl border border-orange-100">
+            {/* Nagłówki kolumn dla czytelności */}
+            {ingredients.length > 0 && (
+              <div className="grid grid-cols-[1fr_80px_80px_40px] gap-3 text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 pl-1">
+                <span>Produkt</span>
+                <span>Ilość</span>
+                <span>J.m.</span>
+                <span></span>
+              </div>
+            )}
+
             {ingredients.map((ing, i) => (
-              <div key={i} className="flex gap-2">
-                <input placeholder="Produkt" value={ing.name} onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} className="input-kitchen flex-grow" />
-                <input placeholder="Ilość" value={ing.amount} onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} className="input-kitchen w-20 text-center" />
-                <input placeholder="J.m." value={ing.unit} onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} className="input-kitchen w-20 text-center" />
-                <button type="button" onClick={() => removeIngredient(i)} className="text-red-400 font-bold px-2">✕</button>
+              <div key={i} className="grid grid-cols-[1fr_80px_80px_40px] gap-3 items-start animate-fade-in-up">
+                <Input 
+                  placeholder="np. Mąka" 
+                  value={ing.name} 
+                  onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} 
+                  className="bg-white"
+                />
+                <Input 
+                  placeholder="0" 
+                  value={ing.amount} 
+                  onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} 
+                  className="bg-white text-center"
+                />
+                <Input 
+                  placeholder="szt." 
+                  value={ing.unit} 
+                  onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} 
+                  className="bg-white text-center"
+                />
+                
+                {ingredients.length > 1 ? (
+                  <Button 
+                    type="button" 
+                    onClick={() => removeIngredient(i)} 
+                    variant="ghost"
+                    className="h-[42px] w-[40px] text-red-400 hover:text-red-600 hover:bg-red-50"
+                  >
+                    🗑
+                  </Button>
+                ) : <div />} 
               </div>
             ))}
+            
+            {ingredients.length === 0 && (
+              <p className="text-center text-gray-400 text-sm py-4">Brak składników. Dodaj coś pysznego!</p>
+            )}
           </div>
         </section>
 
+        <hr className="border-orange-100" />
+
+        {/* Sekcja: KROKI */}
         <section>
-          <div className="flex justify-between items-center mb-3">
-            <label className="block text-xl font-bold text-gray-800">Przygotowanie</label>
-            <button type="button" onClick={addStep} className="text-sm font-bold text-orange-600">+ Dodaj</button>
+          <div className="flex justify-between items-end mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              👨‍🍳 Przygotowanie
+            </h3>
+            <Button type="button" onClick={addStep} variant="secondary" className="text-xs py-1">
+              + Dodaj krok
+            </Button>
           </div>
-          <div className="space-y-3">
+          
+          <div className="space-y-4">
             {steps.map((s, i) => (
-              <div key={i} className="flex gap-3">
-                <span className="w-8 h-8 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center font-bold text-sm mt-1">{i + 1}</span>
-                <textarea placeholder="Opis kroku..." value={s} onChange={(e) => handleStepChange(i, e.target.value)} className="input-kitchen flex-grow min-h-[60px]" />
-                <button type="button" onClick={() => removeStep(i)} className="text-red-400 font-bold mt-2">✕</button>
+              <div key={i} className="flex gap-4 items-start group">
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mt-1 border border-orange-200">
+                  {i + 1}
+                </span>
+                <div className="flex-grow">
+                   <Textarea 
+                      placeholder={`Opisz krok ${i + 1}...`} 
+                      value={s} 
+                      onChange={(e) => handleStepChange(i, e.target.value)} 
+                      className="min-h-[80px]"
+                   />
+                </div>
+                {steps.length > 1 && (
+                  <Button 
+                    type="button" 
+                    onClick={() => removeStep(i)} 
+                    variant="ghost" 
+                    className="mt-2 text-gray-300 hover:text-red-500"
+                  >
+                    ✕
+                  </Button>
+                )}
               </div>
             ))}
           </div>
         </section>
 
-        <div className="pt-4 flex justify-end">
-          <button type="submit" disabled={saving} className="btn-primary text-lg px-10">
-            {saving ? 'Zapisywanie...' : (id ? 'Zapisz zmiany' : 'Dodaj przepis')}
-          </button>
+        {/* Footer formularza */}
+        <div className="pt-6 flex justify-end gap-4 border-t border-orange-50">
+           <Button type="button" variant="ghost" onClick={() => navigate('/')}>
+             Anuluj
+           </Button>
+           <Button type="submit" isLoading={saving} className="px-8 text-lg shadow-orange-300">
+             {id ? 'Zapisz zmiany' : 'Opublikuj przepis'}
+           </Button>
         </div>
       </form>
     </div>

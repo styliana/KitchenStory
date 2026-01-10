@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Input from '../components/ui/Input'; // <--- Nowy import
+import Button from '../components/ui/Button'; // <--- Nowy import
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true); // Przełącznik: Logowanie czy Rejestracja
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,12 +22,12 @@ export default function AuthPage() {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        navigate('/'); // Po sukcesie idź na główną
+        navigate('/');
       } else {
         const { error } = await signUp(email, password);
         if (error) throw error;
         alert('Konto utworzone! Możesz się teraz zalogować.');
-        setIsLogin(true); // Przełącz na logowanie
+        setIsLogin(true);
       }
     } catch (err) {
       setError(err.message);
@@ -42,52 +44,49 @@ export default function AuthPage() {
         </h2>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm border border-red-100">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-            <input 
-              type="email" 
-              required 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-kitchen w-full p-3"
-              placeholder="twoj@email.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Hasło</label>
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-kitchen w-full p-3"
-              placeholder="••••••••"
-              minLength={6}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Input 
+            label="Adres Email"
+            type="email" 
+            required 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="twoj@email.com"
+          />
+          
+          <Input 
+            label="Hasło"
+            type="password" 
+            required 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            minLength={6}
+          />
 
-          <button 
+          <Button 
             type="submit" 
-            disabled={loading}
-            className="w-full btn-primary py-3 text-lg"
+            isLoading={loading}
+            className="w-full"
+            variant="primary"
           >
-            {loading ? 'Przetwarzanie...' : (isLogin ? 'Zaloguj się' : 'Zarejestruj się')}
-          </button>
+            {isLogin ? 'Zaloguj się' : 'Zarejestruj się'}
+          </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
-          <button 
+        <div className="mt-8 text-center">
+          <Button 
+            variant="link"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-orange-600 hover:underline font-bold"
+            type="button"
           >
             {isLogin ? 'Nie masz konta? Zarejestruj się' : 'Masz już konto? Zaloguj się'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
