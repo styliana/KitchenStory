@@ -2,11 +2,11 @@ import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import RecipeListPage from './pages/RecipeListPage';
 import AddRecipePage from './pages/AddRecipePage';
+import RecipeDetailsPage from './pages/RecipeDetailsPage'; // <--- 1. Import
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Ozdobny nagłówek */}
       <header className="bg-white shadow-sm border-b-4 border-orange-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="group">
@@ -30,6 +30,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<RecipeListPage />} />
           <Route path="/add" element={<AddRecipePage />} />
+          <Route path="/recipe/:id" element={<RecipeDetailsPage />} /> {/* <--- 2. Nowa trasa */}
         </Routes>
       </main>
 
