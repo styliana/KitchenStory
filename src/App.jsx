@@ -1,50 +1,41 @@
-import React, { useRef } from 'react';
-import RecipeLayout from './components/RecipeLayout';
-import { exportElementToPdf } from './utils/exportPdf';
-
-const sampleRecipe = {
-  title: 'Spiced Tomato Pasta',
-  additionalInfo: 'A quick and cozy weekday meal.',
-  ingredients: [
-    { name: 'Pasta', amount: 300, unit: 'g' },
-    { name: 'Tomatoes', amount: 4, unit: 'pcs' },
-    { name: 'Olive oil', amount: 2, unit: 'tbsp' },
-  ],
-  steps: [
-    'Boil pasta according to package instructions.',
-    'Sauté tomatoes with olive oil and seasoning.',
-    'Combine pasta and sauce, serve hot.'
-  ]
-};
+import React from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import RecipeListPage from './pages/RecipeListPage';
+import AddRecipePage from './pages/AddRecipePage';
 
 export default function App() {
-  const ref = useRef(null);
-
-  const handleExport = async () => {
-    if (!ref.current) return;
-    try {
-      await exportElementToPdf(ref.current, `${sampleRecipe.title}.pdf`);
-    } catch (err) {
-      console.error('Export failed', err);
-      alert('Failed to export PDF. See console for details.');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="max-w-4xl mx-auto p-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">KitchenStory</h1>
-          <p className="mt-2 text-sm text-gray-600">Share recipes, generate beautiful PDFs, and send links to friends.</p>
-        </div>
-        <div>
-          <button onClick={handleExport} className="bg-red-500 text-white px-4 py-2 rounded">Export sample PDF</button>
+    <div className="min-h-screen flex flex-col">
+      {/* Ozdobny nagłówek */}
+      <header className="bg-white shadow-sm border-b-4 border-orange-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="group">
+            <h1 className="text-3xl font-bold text-orange-600 flex items-center gap-2">
+              <span className="text-4xl group-hover:rotate-12 transition-transform">🥘</span> 
+              KitchenStory
+            </h1>
+            <p className="text-xs text-gray-500 font-sans tracking-wider uppercase ml-12">Community Cookbook</p>
+          </Link>
+
+          <nav className="flex gap-4">
+            <Link to="/" className="btn-secondary text-sm">Przeglądaj</Link>
+            <Link to="/add" className="btn-primary text-sm flex items-center gap-2">
+              <span>+</span> Dodaj przepis
+            </Link>
+          </nav>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-6">
-        <RecipeLayout ref={ref} recipe={sampleRecipe} />
+      <main className="flex-grow max-w-5xl mx-auto w-full p-6">
+        <Routes>
+          <Route path="/" element={<RecipeListPage />} />
+          <Route path="/add" element={<AddRecipePage />} />
+        </Routes>
       </main>
+
+      <footer className="text-center py-8 text-orange-800/60 text-sm">
+        &copy; {new Date().getFullYear()} KitchenStory. Gotowane z pasją.
+      </footer>
     </div>
   );
 }
