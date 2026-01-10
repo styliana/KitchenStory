@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 const RecipeLayout = forwardRef(function RecipeLayout({ recipe }, ref) {
   return (
@@ -22,5 +23,20 @@ const RecipeLayout = forwardRef(function RecipeLayout({ recipe }, ref) {
     </article>
   );
 });
+
+RecipeLayout.propTypes = {
+  recipe: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    additionalInfo: PropTypes.string,
+    ingredients: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        amount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+        unit: PropTypes.string,
+      })
+    ).isRequired,
+    steps: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }).isRequired,
+};
 
 export default RecipeLayout;
