@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import useRecipes from '../hooks/useRecipes';
 import { supabase } from '../lib/supabaseClient';
 import { uploadImageToSupabase } from '../services/imageService';
 
@@ -14,16 +13,22 @@ import Button from '../components/ui/Button';
 const emptyIngredient = () => ({ name: '', amount: '', unit: '' });
 const CATEGORIES = ['Śniadanie', 'Obiad', 'Kolacja', 'Deser', 'Przekąska', 'Napój'];
 
+// Helper do wyciągania liczb z tekstu (np. "45 min" -> 45)
+const extractNumber = (str) => {
+  if (!str) return 0;
+  const match = str.toString().match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+};
+
 export default function AddRecipePage() {
-  const { addRecipe } = useRecipes();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams(); // Jeśli jest ID, to znaczy, że edytujemy
 
   // --- STANY ---
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
-  const [prepTime, setPrepTime] = useState(''); // Nowe pole
-  const [servings, setServings] = useState(''); // Nowe pole
+  const [prepTime, setPrepTime] = useState(''); // Tekst (np. "45 min")
+  const [servings, setServings] = useState(''); // Tekst (np. "4 osoby")
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [ingredients, setIngredients] = useState([emptyIngredient(), emptyIngredient()]);
   const [steps, setSteps] = useState(['', '']);
@@ -34,7 +39,7 @@ export default function AddRecipePage() {
   const [loadingData, setLoadingData] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // --- ŁADOWANIE DANYCH (EDYCJA) ---
+  // --- ŁADOWANIE DANYCH (PRZY EDYCJI) ---
   useEffect(() => {
     if (!id) return;
     setLoadingData(true);
@@ -48,14 +53,14 @@ export default function AddRecipePage() {
       if (!error && data) {
         setTitle(data.title);
         setCategory(data.category || '');
-        setPrepTime(data.prep_time || ''); // Pobieramy czas
-        setServings(data.servings || '');   // Pobieramy porcje
+        setPrepTime(data.prep_time || '');
+        setServings(data.servings || '');
         setAdditionalInfo(data.additional_info || '');
         setIngredients(data.ingredients || []);
         setSteps(data.steps || []);
         setExistingImageUrl(data.image_url);
       } else {
-        alert("Nie udało się pobrać danych.");
+        alert("Nie udało się pobrać danych przepisu.");
         navigate('/');
       }
       setLoadingData(false);
@@ -63,7 +68,7 @@ export default function AddRecipePage() {
     fetchRecipeToEdit();
   }, [id, navigate]);
 
-  // --- HANDLERY ---
+  // --- HANDLERY ZMIAN W FORMULARZU ---
   const handleIngredientChange = (index, key, value) => {
     setIngredients((prev) => prev.map((ing, i) => (i === index ? { ...ing, [key]: value } : ing)));
   };
@@ -74,30 +79,43 @@ export default function AddRecipePage() {
   const addStep = () => setSteps((prev) => [...prev, '']);
   const removeStep = (index) => setSteps((prev) => prev.filter((_, i) => i !== index));
 
+  // --- ZAPISYWANIE ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
+      // 1. Upload zdjęcia (jeśli wybrano nowe)
       let finalImageUrl = existingImageUrl;
       if (imageFile) {
         finalImageUrl = await uploadImageToSupabase(imageFile);
       }
 
+      // 2. Przygotowanie danych
       const recipeData = {
         title,
         category,
-        prep_time: prepTime, // Snake_case dla bazy
-        servings: servings,  // Snake_case dla bazy
+        
+        // Zapisujemy wersję tekstową do wyświetlania
+        prep_time: prepTime,
+        servings: servings,
+        
+        // Zapisujemy wersję liczbową do filtrowania
+        prep_time_minutes: extractNumber(prepTime),
+        servings_count: extractNumber(servings),
+        
         additional_info: additionalInfo,
         image_url: finalImageUrl,
         ingredients: ingredients.filter((i) => i.name.trim()),
         steps: steps.filter((s) => s.trim())
       };
 
+      // 3. Wysłanie do bazy
       if (id) {
+        // Aktualizacja
         const { error } = await supabase.from('recipes').update(recipeData).eq('id', id);
         if (error) throw error;
       } else {
+        // Nowy wpis
         const { error } = await supabase.from('recipes').insert(recipeData);
         if (error) throw error;
       }
@@ -105,13 +123,13 @@ export default function AddRecipePage() {
       navigate(id ? `/recipe/${id}` : '/');
     } catch (err) {
       console.error('Save failed', err);
-      alert('Błąd zapisu.');
+      alert('Błąd zapisu. Sprawdź konsolę.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loadingData) return <div className="text-center py-20 font-bold text-orange-400">Ładowanie...</div>;
+  if (loadingData) return <div className="text-center py-20 font-bold text-orange-400">Ładowanie danych...</div>;
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
@@ -121,20 +139,22 @@ export default function AddRecipePage() {
       
       <form onSubmit={handleSubmit} className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-orange-100 space-y-10">
         
-        {/* ZDJĘCIE */}
+        {/* Sekcja: ZDJĘCIE */}
         <section>
           {existingImageUrl && !imageFile && (
-             <div className="mb-6 relative group overflow-hidden rounded-2xl h-48 border border-orange-100">
-               <img src={existingImageUrl} alt="Obecne" className="w-full h-full object-cover" />
-               <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                 Obecne zdjęcie
+             <div className="mb-6 relative group overflow-hidden rounded-2xl h-48 border border-orange-100 bg-orange-50">
+               <img src={existingImageUrl} alt="Obecne" className="w-full h-full object-cover opacity-80" />
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                 <span className="bg-white/90 px-4 py-2 rounded-full text-xs font-bold text-gray-600 shadow-sm">
+                   Obecne zdjęcie (dodaj nowe, aby zmienić)
+                 </span>
                </div>
              </div>
           )}
           <ImageUploader onImageSelected={setImageFile} />
         </section>
         
-        {/* PODSTAWOWE INFO */}
+        {/* Sekcja: PODSTAWOWE INFO */}
         <section className="space-y-6">
           <Input 
             label="Nazwa potrawy"
@@ -151,9 +171,8 @@ export default function AddRecipePage() {
               onChange={(e) => setCategory(e.target.value)}
               options={CATEGORIES}
             />
-            {/* NOWE POLA */}
             <Input 
-              label="Czas (min)"
+              label="Czas (np. 45 min)"
               placeholder="np. 45 min" 
               value={prepTime} 
               onChange={(e) => setPrepTime(e.target.value)} 
@@ -176,7 +195,7 @@ export default function AddRecipePage() {
 
         <hr className="border-orange-100" />
 
-        {/* SKŁADNIKI */}
+        {/* Sekcja: SKŁADNIKI */}
         <section>
           <div className="flex justify-between items-end mb-4">
             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">🥦 Składniki</h3>
@@ -193,11 +212,33 @@ export default function AddRecipePage() {
             )}
             {ingredients.map((ing, i) => (
               <div key={i} className="grid grid-cols-[1fr_80px_80px_40px] gap-3 items-start animate-fade-in-up">
-                <Input value={ing.name} onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} className="bg-white" />
-                <Input value={ing.amount} onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} className="bg-white text-center" />
-                <Input value={ing.unit} onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} className="bg-white text-center" />
+                <Input 
+                  value={ing.name} 
+                  onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} 
+                  className="bg-white" 
+                  placeholder="Nazwa"
+                />
+                <Input 
+                  value={ing.amount} 
+                  onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} 
+                  className="bg-white text-center" 
+                  placeholder="0"
+                />
+                <Input 
+                  value={ing.unit} 
+                  onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} 
+                  className="bg-white text-center" 
+                  placeholder="szt."
+                />
                 {ingredients.length > 1 ? (
-                  <Button type="button" onClick={() => removeIngredient(i)} variant="ghost" className="h-[42px] w-[40px] text-red-400 hover:text-red-600 hover:bg-red-50">🗑</Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => removeIngredient(i)} 
+                    variant="ghost" 
+                    className="h-[42px] w-[40px] text-red-400 hover:text-red-600 hover:bg-red-50"
+                  >
+                    🗑
+                  </Button>
                 ) : <div />} 
               </div>
             ))}
@@ -206,7 +247,7 @@ export default function AddRecipePage() {
 
         <hr className="border-orange-100" />
 
-        {/* KROKI */}
+        {/* Sekcja: KROKI */}
         <section>
           <div className="flex justify-between items-end mb-4">
             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">👨‍🍳 Przygotowanie</h3>
@@ -215,12 +256,26 @@ export default function AddRecipePage() {
           <div className="space-y-4">
             {steps.map((s, i) => (
               <div key={i} className="flex gap-4 items-start group">
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mt-1 border border-orange-200">{i + 1}</span>
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mt-1 border border-orange-200">
+                  {i + 1}
+                </span>
                 <div className="flex-grow">
-                   <Textarea placeholder={`Opisz krok ${i + 1}...`} value={s} onChange={(e) => handleStepChange(i, e.target.value)} className="min-h-[80px]" />
+                   <Textarea 
+                     placeholder={`Opisz krok ${i + 1}...`} 
+                     value={s} 
+                     onChange={(e) => handleStepChange(i, e.target.value)} 
+                     className="min-h-[80px]" 
+                   />
                 </div>
                 {steps.length > 1 && (
-                  <Button type="button" onClick={() => removeStep(i)} variant="ghost" className="mt-2 text-gray-300 hover:text-red-500">✕</Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => removeStep(i)} 
+                    variant="ghost" 
+                    className="mt-2 text-gray-300 hover:text-red-500"
+                  >
+                    ✕
+                  </Button>
                 )}
               </div>
             ))}
