@@ -1,11 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --brand: #ef4444;
+@layer base {
+  body {
+    @apply bg-orange-50 text-gray-800 font-sans;
+    font-family: 'Lato', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    @apply text-gray-900;
+  }
 }
 
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+@layer components {
+  .btn-primary {
+    @apply bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply bg-white hover:bg-orange-100 text-orange-600 font-semibold py-2 px-4 rounded-full border border-orange-200 shadow-sm transition-colors;
+  }
+
+  .input-kitchen {
+    @apply w-full border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 shadow-sm bg-white/80 backdrop-blur-sm;
+  }
+
+  .card-kitchen {
+    @apply bg-white rounded-2xl shadow-xl border border-orange-100 overflow-hidden;
+  }
 }
