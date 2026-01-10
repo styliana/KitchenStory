@@ -4,7 +4,7 @@ import useRecipes from '../hooks/useRecipes';
 import { supabase } from '../lib/supabaseClient';
 import { uploadImageToSupabase } from '../services/imageService';
 
-// Import komponentów UI (Clean Code!)
+// Komponenty UI
 import ImageUploader from '../components/recipes/ImageUploader';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -19,9 +19,11 @@ export default function AddRecipePage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Stany formularza
+  // --- STANY ---
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [prepTime, setPrepTime] = useState(''); // Nowe pole
+  const [servings, setServings] = useState(''); // Nowe pole
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [ingredients, setIngredients] = useState([emptyIngredient(), emptyIngredient()]);
   const [steps, setSteps] = useState(['', '']);
@@ -46,6 +48,8 @@ export default function AddRecipePage() {
       if (!error && data) {
         setTitle(data.title);
         setCategory(data.category || '');
+        setPrepTime(data.prep_time || ''); // Pobieramy czas
+        setServings(data.servings || '');   // Pobieramy porcje
         setAdditionalInfo(data.additional_info || '');
         setIngredients(data.ingredients || []);
         setSteps(data.steps || []);
@@ -82,6 +86,8 @@ export default function AddRecipePage() {
       const recipeData = {
         title,
         category,
+        prep_time: prepTime, // Snake_case dla bazy
+        servings: servings,  // Snake_case dla bazy
         additional_info: additionalInfo,
         image_url: finalImageUrl,
         ingredients: ingredients.filter((i) => i.name.trim()),
@@ -105,7 +111,7 @@ export default function AddRecipePage() {
     }
   };
 
-  if (loadingData) return <div className="text-center py-20 font-bold text-orange-400">Ładowanie składników...</div>;
+  if (loadingData) return <div className="text-center py-20 font-bold text-orange-400">Ładowanie...</div>;
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
@@ -115,7 +121,7 @@ export default function AddRecipePage() {
       
       <form onSubmit={handleSubmit} className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-orange-100 space-y-10">
         
-        {/* Sekcja: ZDJĘCIE */}
+        {/* ZDJĘCIE */}
         <section>
           {existingImageUrl && !imageFile && (
              <div className="mb-6 relative group overflow-hidden rounded-2xl h-48 border border-orange-100">
@@ -128,7 +134,7 @@ export default function AddRecipePage() {
           <ImageUploader onImageSelected={setImageFile} />
         </section>
         
-        {/* Sekcja: INFO */}
+        {/* PODSTAWOWE INFO */}
         <section className="space-y-6">
           <Input 
             label="Nazwa potrawy"
@@ -138,37 +144,45 @@ export default function AddRecipePage() {
             onChange={(e) => setTitle(e.target.value)} 
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Select 
               label="Kategoria"
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
               options={CATEGORIES}
             />
+            {/* NOWE POLA */}
             <Input 
-              label="Info (czas, porcje)"
-              placeholder="np. 45 min, 4 osoby" 
-              value={additionalInfo} 
-              onChange={(e) => setAdditionalInfo(e.target.value)} 
+              label="Czas (min)"
+              placeholder="np. 45 min" 
+              value={prepTime} 
+              onChange={(e) => setPrepTime(e.target.value)} 
+            />
+            <Input 
+              label="Ilość porcji"
+              placeholder="np. 4 osoby" 
+              value={servings} 
+              onChange={(e) => setServings(e.target.value)} 
             />
           </div>
+
+          <Input 
+              label="Krótki opis / Notatki (opcjonalne)"
+              placeholder="np. Najlepiej smakuje na ciepło z lodami..." 
+              value={additionalInfo} 
+              onChange={(e) => setAdditionalInfo(e.target.value)} 
+          />
         </section>
 
         <hr className="border-orange-100" />
 
-        {/* Sekcja: SKŁADNIKI (TUTAJ BYŁ BRZYDKI INPUT) */}
+        {/* SKŁADNIKI */}
         <section>
           <div className="flex justify-between items-end mb-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              🥦 Składniki
-            </h3>
-            <Button type="button" onClick={addIngredientRow} variant="secondary" className="text-xs py-1">
-              + Dodaj pozycję
-            </Button>
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">🥦 Składniki</h3>
+            <Button type="button" onClick={addIngredientRow} variant="secondary" className="text-xs py-1">+ Dodaj pozycję</Button>
           </div>
-
           <div className="space-y-3 bg-orange-50/40 p-6 rounded-2xl border border-orange-100">
-            {/* Nagłówki kolumn dla czytelności */}
             {ingredients.length > 0 && (
               <div className="grid grid-cols-[1fr_80px_80px_40px] gap-3 text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 pl-1">
                 <span>Produkt</span>
@@ -177,94 +191,45 @@ export default function AddRecipePage() {
                 <span></span>
               </div>
             )}
-
             {ingredients.map((ing, i) => (
               <div key={i} className="grid grid-cols-[1fr_80px_80px_40px] gap-3 items-start animate-fade-in-up">
-                <Input 
-                  placeholder="np. Mąka" 
-                  value={ing.name} 
-                  onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} 
-                  className="bg-white"
-                />
-                <Input 
-                  placeholder="0" 
-                  value={ing.amount} 
-                  onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} 
-                  className="bg-white text-center"
-                />
-                <Input 
-                  placeholder="szt." 
-                  value={ing.unit} 
-                  onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} 
-                  className="bg-white text-center"
-                />
-                
+                <Input value={ing.name} onChange={(e) => handleIngredientChange(i, 'name', e.target.value)} className="bg-white" />
+                <Input value={ing.amount} onChange={(e) => handleIngredientChange(i, 'amount', e.target.value)} className="bg-white text-center" />
+                <Input value={ing.unit} onChange={(e) => handleIngredientChange(i, 'unit', e.target.value)} className="bg-white text-center" />
                 {ingredients.length > 1 ? (
-                  <Button 
-                    type="button" 
-                    onClick={() => removeIngredient(i)} 
-                    variant="ghost"
-                    className="h-[42px] w-[40px] text-red-400 hover:text-red-600 hover:bg-red-50"
-                  >
-                    🗑
-                  </Button>
+                  <Button type="button" onClick={() => removeIngredient(i)} variant="ghost" className="h-[42px] w-[40px] text-red-400 hover:text-red-600 hover:bg-red-50">🗑</Button>
                 ) : <div />} 
               </div>
             ))}
-            
-            {ingredients.length === 0 && (
-              <p className="text-center text-gray-400 text-sm py-4">Brak składników. Dodaj coś pysznego!</p>
-            )}
           </div>
         </section>
 
         <hr className="border-orange-100" />
 
-        {/* Sekcja: KROKI */}
+        {/* KROKI */}
         <section>
           <div className="flex justify-between items-end mb-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              👨‍🍳 Przygotowanie
-            </h3>
-            <Button type="button" onClick={addStep} variant="secondary" className="text-xs py-1">
-              + Dodaj krok
-            </Button>
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">👨‍🍳 Przygotowanie</h3>
+            <Button type="button" onClick={addStep} variant="secondary" className="text-xs py-1">+ Dodaj krok</Button>
           </div>
-          
           <div className="space-y-4">
             {steps.map((s, i) => (
               <div key={i} className="flex gap-4 items-start group">
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mt-1 border border-orange-200">
-                  {i + 1}
-                </span>
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mt-1 border border-orange-200">{i + 1}</span>
                 <div className="flex-grow">
-                   <Textarea 
-                      placeholder={`Opisz krok ${i + 1}...`} 
-                      value={s} 
-                      onChange={(e) => handleStepChange(i, e.target.value)} 
-                      className="min-h-[80px]"
-                   />
+                   <Textarea placeholder={`Opisz krok ${i + 1}...`} value={s} onChange={(e) => handleStepChange(i, e.target.value)} className="min-h-[80px]" />
                 </div>
                 {steps.length > 1 && (
-                  <Button 
-                    type="button" 
-                    onClick={() => removeStep(i)} 
-                    variant="ghost" 
-                    className="mt-2 text-gray-300 hover:text-red-500"
-                  >
-                    ✕
-                  </Button>
+                  <Button type="button" onClick={() => removeStep(i)} variant="ghost" className="mt-2 text-gray-300 hover:text-red-500">✕</Button>
                 )}
               </div>
             ))}
           </div>
         </section>
 
-        {/* Footer formularza */}
+        {/* FOOTER */}
         <div className="pt-6 flex justify-end gap-4 border-t border-orange-50">
-           <Button type="button" variant="ghost" onClick={() => navigate('/')}>
-             Anuluj
-           </Button>
+           <Button type="button" variant="ghost" onClick={() => navigate('/')}>Anuluj</Button>
            <Button type="submit" isLoading={saving} className="px-8 text-lg shadow-orange-300">
              {id ? 'Zapisz zmiany' : 'Opublikuj przepis'}
            </Button>
