@@ -2,18 +2,20 @@ import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Importy stron
+// Importy Stron
 import RecipeListPage from './pages/RecipeListPage';
 import AddRecipePage from './pages/AddRecipePage';
 import RecipeDetailsPage from './pages/RecipeDetailsPage';
 import AuthPage from './pages/AuthPage';
 import MyRecipesPage from './pages/MyRecipesPage';
+import ChefProfilePage from './pages/ChefProfilePage'; // <--- NOWY IMPORT
 
-// Importy nowych komponentów UI
+// Importy Komponentów UI
 import NavBar from './components/ui/NavBar';
 import Footer from './components/ui/Footer';
+import Loader from './components/ui/Loader';
 
-// Komponent chroniący trasy (tylko dla zalogowanych)
+// Komponent chroniący trasy (Guard)
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -24,8 +26,7 @@ function ProtectedRoute({ children }) {
     }
   }, [user, loading, navigate]);
 
-  // Podczas ładowania auth nie pokazujemy nic (lub spinner), żeby nie mignęło przekierowanie
-  if (loading) return null; 
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader /></div>; 
 
   return user ? children : null;
 }
@@ -33,20 +34,21 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col bg-orange-50/30 font-sans">
+      <div className="min-h-screen flex flex-col bg-orange-50/30 font-sans text-gray-800">
         
-        {/* Nawigacja jako osobny komponent */}
+        {/* Nawigacja */}
         <NavBar />
 
-        {/* Główna treść */}
-        <main className="flex-grow w-full max-w-5xl mx-auto p-6">
+        {/* Główny kontener */}
+        <main className="flex-grow w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
           <Routes>
-            {/* Trasy Publiczne */}
+            {/* --- TRASY PUBLICZNE --- */}
             <Route path="/" element={<RecipeListPage />} />
             <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
+            <Route path="/chef/:id" element={<ChefProfilePage />} /> {/* <--- NOWA TRASA */}
             <Route path="/auth" element={<AuthPage />} />
 
-            {/* Trasy Chronione (Wymagają logowania) */}
+            {/* --- TRASY PRYWATNE --- */}
             <Route path="/add" element={
               <ProtectedRoute>
                 <AddRecipePage />
@@ -67,7 +69,7 @@ export default function App() {
           </Routes>
         </main>
 
-        {/* Stopka jako osobny komponent */}
+        {/* Stopka */}
         <Footer />
         
       </div>
