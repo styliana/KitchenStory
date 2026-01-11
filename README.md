@@ -1,20 +1,18 @@
 # KitchenStory 🍽️
 
-**KitchenStory** is a community recipe app built with **Vite**, **React (JavaScript)**, and **Tailwind CSS**. It lets users add recipes (title, ingredients, steps, additional info), store them locally or in **Supabase**, generate PDFs from recipes, and share recipe links with others.
+Your kitchen story to share - join our community of chefs, amateurs and everyone who cooks!
 
----
+## 🚀 What can you do now?
+- Add, view recipes, view your collection!
+- Export recipe to PDF
+- Log in and have a profile
 
-## 🚀 Features (current)
-- Add recipes with structured ingredients (name, amount, unit) and ordered steps
-- LocalStorage fallback when Supabase is not configured
-- Export recipe to PDF (via html2canvas + jsPDF)
-- Simple list and add UI, ready to connect to Supabase
-
-## 🔭 Roadmap (coming soon)
-- Multiple beautiful PDF layouts and templates
-- Auth & per-user recipe ownership (Supabase Auth)
+## 🔭 Coming soon
+- Multiple beautiful PDF layouts and templates 
 - Shareable/permalink recipe pages
 - Edit/delete recipes and image attachments
+- Like and make recipes popular
+- Have your food influencer profile and edit it
 
 ---
 
