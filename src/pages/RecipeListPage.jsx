@@ -2,26 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { hasSupabase } from '../lib/supabaseClient';
 
-// Komponenty UI
 import RecipeCard from '../components/recipes/RecipeCard';
 import RecipeFilters from '../components/recipes/RecipeFilters';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
+// Link usunięty
 
 export default function RecipeListPage() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const usingSupabase = hasSupabase();
 
-  // Stan filtrów
   const [filters, setFilters] = useState({
     query: '',
     category: '',
-    maxTime: 0, // 0 oznacza "wszystkie"
+    maxTime: 0, 
     sort: 'newest'
   });
 
-  // Funkcja resetująca filtry
   const clearFilters = () => setFilters({ query: '', category: '', maxTime: 0, sort: 'newest' });
 
   useEffect(() => {
@@ -36,30 +34,20 @@ export default function RecipeListPage() {
       setLoading(true);
 
       try {
-        // 1. Budujemy zapytanie podstawowe
-        // WAŻNE: Pobieramy przepisy ORAZ dane profilu autora (join)
         let queryBuilder = supabase
           .from('recipes')
           .select('*, profiles(id, username, avatar_url)');
 
-        // 2. Aplikujemy filtry
-        
-        // Wyszukiwanie po tytule (case-insensitive)
         if (filters.query) {
           queryBuilder = queryBuilder.ilike('title', `%${filters.query}%`);
         }
-
-        // Kategoria
         if (filters.category) {
           queryBuilder = queryBuilder.eq('category', filters.category);
         }
-
-        // Czas przygotowania (wymaga kolumny liczbowej w bazie: prep_time_minutes)
         if (filters.maxTime > 0) {
           queryBuilder = queryBuilder.lte('prep_time_minutes', filters.maxTime);
         }
 
-        // Sortowanie
         switch (filters.sort) {
           case 'oldest':
             queryBuilder = queryBuilder.order('created_at', { ascending: true });
@@ -76,7 +64,6 @@ export default function RecipeListPage() {
             break;
         }
 
-        // 3. Wykonanie zapytania
         const { data, error } = await queryBuilder;
 
         if (error) {
@@ -89,12 +76,10 @@ export default function RecipeListPage() {
       } catch (err) {
         console.error('Nieoczekiwany błąd:', err);
       } finally {
-        // To wykona się ZAWSZE - koniec kręcenia spinnerem
         if (mounted) setLoading(false);
       }
     }
 
-    // Debounce: czekamy 400ms po wpisaniu tekstu zanim strzelimy do API
     const timer = setTimeout(() => {
       fetchRecipes();
     }, 400);
@@ -107,7 +92,6 @@ export default function RecipeListPage() {
 
   return (
     <div>
-      {/* Nagłówek sekcji */}
       <div className="text-center mb-10">
         <h2 className="text-4xl font-bold text-gray-800 mb-2 font-serif">Książka Kucharska</h2>
         <p className="text-gray-600 max-w-lg mx-auto">
@@ -116,13 +100,10 @@ export default function RecipeListPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
-        
-        {/* LEWA KOLUMNA: FILTRY */}
         <aside className="lg:sticky lg:top-24">
            <RecipeFilters filters={filters} setFilters={setFilters} onClear={clearFilters} />
         </aside>
 
-        {/* PRAWA KOLUMNA: WYNIKI */}
         <div>
            {!usingSupabase && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded text-red-800 shadow-sm">
@@ -152,7 +133,6 @@ export default function RecipeListPage() {
              </div>
            )}
         </div>
-
       </div>
     </div>
   );

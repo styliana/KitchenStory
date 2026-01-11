@@ -1,22 +1,17 @@
 import React, { forwardRef } from 'react';
+import PropTypes from 'prop-types'; // <--- IMPORT
 
 const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
   if (!recipe) return null;
 
   return (
-    // Kontener ukryty poza ekranem
     <div className="fixed left-[-9999px] top-0">
       <div 
         ref={ref} 
-        // A4 szerokość (794px), wysokość automatyczna (h-auto) dla wielu stron
         className="w-[794px] h-auto min-h-[1123px] bg-[#fffbf2] text-gray-800 font-serif relative flex flex-col"
         style={{ fontFamily: '"Playfair Display", serif' }} 
       >
-        
-        {/* Padding wewnętrzny */}
         <div className="p-12 flex-grow">
-          
-          {/* --- HEADER (Tylko Tytuł i Kategoria) --- */}
           <header className="text-center mb-8 border-b border-orange-200 pb-6">
             <div className="flex justify-between items-center mb-4 px-4 text-xs font-sans uppercase tracking-[0.2em] text-orange-400">
                <span>KitchenStory</span>
@@ -34,32 +29,23 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
             )}
           </header>
 
-          {/* --- SEKCJA GÓRNA: ZDJĘCIE + NOTATKI (Obok siebie!) --- */}
-          {/* To oszczędza mnóstwo miejsca w pionie */}
           <div className="flex gap-10 mb-10 items-start min-h-[200px]">
-            
-            {/* LEWO: Zdjęcie (Maks 40% szerokości) */}
             {recipe.image_url ? (
               <div className="w-[40%] flex-shrink-0 flex justify-center pt-2">
                 <img 
                   src={recipe.image_url} 
                   alt={recipe.title} 
-                  // KLUCZOWE ZMIANY: max-h-[220px] (małe), w-auto (nie rozciągaj), object-contain
                   className="max-h-[220px] w-auto max-w-full rounded shadow-md border-4 border-white rotate-[-2deg]"
                   crossOrigin="anonymous"
                 />
               </div>
             ) : (
-              // Placeholder jeśli brak zdjęcia (żeby układ się nie sypał)
               <div className="w-[30%] flex items-center justify-center text-orange-200 opacity-20">
                 <span className="text-8xl">🍽</span>
               </div>
             )}
 
-            {/* PRAWO: Notatki + Czas/Porcje */}
             <div className="flex-1 flex flex-col justify-center">
-               
-               {/* Metadane (Czas/Porcje) przeniesione tutaj */}
                <div className="flex gap-6 text-sm font-sans uppercase tracking-widest text-gray-500 mb-6 border-b border-orange-100 pb-4">
                   {recipe.prep_time && (
                     <div className="flex items-center gap-2">
@@ -81,7 +67,6 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
                   )}
                </div>
 
-               {/* Notatki (Cytat) */}
                {recipe.additional_info ? (
                  <div className="relative">
                    <span className="text-5xl text-orange-200 absolute -top-4 -left-4 font-serif leading-none">“</span>
@@ -95,16 +80,13 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
             </div>
           </div>
 
-          {/* --- TREŚĆ GŁÓWNA (GRID) --- */}
           <div className="grid grid-cols-[1fr_1.5fr] gap-10 items-start">
-            
-            {/* LEWA KOLUMNA: SKŁADNIKI */}
             <div className="bg-white/60 p-6 rounded-xl border border-orange-100 shadow-sm">
               <h3 className="text-sm font-bold text-orange-800 border-b-2 border-orange-200 pb-2 mb-4 uppercase tracking-widest font-sans">
                 Składniki
               </h3>
               <ul className="space-y-3">
-                {recipe.ingredients.map((ing, i) => (
+                {recipe.ingredients && recipe.ingredients.map((ing, i) => (
                   <li key={i} className="flex items-end justify-between text-sm group">
                     <span className="font-bold text-gray-800 relative z-10 pr-2">
                       {ing.name}
@@ -118,13 +100,12 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
               </ul>
             </div>
 
-            {/* PRAWA KOLUMNA: KROKI */}
             <div>
               <h3 className="text-sm font-bold text-orange-800 border-b-2 border-orange-200 pb-2 mb-4 uppercase tracking-widest font-sans">
                 Przygotowanie
               </h3>
               <div className="space-y-5">
-                {recipe.steps.map((step, i) => (
+                {recipe.steps && recipe.steps.map((step, i) => (
                   <div key={i} className="flex gap-4">
                     <div className="flex-shrink-0 mt-0.5">
                       <span className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-[10px] font-sans shadow-sm">
@@ -142,7 +123,6 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
           </div>
         </div>
 
-        {/* --- FOOTER --- */}
         <div className="pb-4 pt-4 text-center mt-auto bg-[#fffbf2]">
           <p className="text-orange-900/20 text-[9px] font-sans uppercase tracking-[0.2em]">
             Wygenerowano z aplikacji KitchenStory
@@ -155,4 +135,23 @@ const RecipePdfTemplate = forwardRef(({ recipe }, ref) => {
 });
 
 RecipePdfTemplate.displayName = 'RecipePdfTemplate';
+
+// To naprawia błędy w Template
+RecipePdfTemplate.propTypes = {
+  recipe: PropTypes.shape({
+    title: PropTypes.string,
+    category: PropTypes.string,
+    image_url: PropTypes.string,
+    prep_time: PropTypes.string,
+    servings: PropTypes.string,
+    additional_info: PropTypes.string,
+    ingredients: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+      amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      unit: PropTypes.string
+    })),
+    steps: PropTypes.arrayOf(PropTypes.string)
+  })
+};
+
 export default RecipePdfTemplate;

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types'; // <--- Dodano import PropTypes
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
@@ -43,7 +44,10 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Własny hook dla wygody
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired
+};
+
 export const useAuth = () => {
   return useContext(AuthContext);
 };

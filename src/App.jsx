@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types'; // <--- Dodano import PropTypes
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Importy Stron
@@ -8,7 +9,7 @@ import AddRecipePage from './pages/AddRecipePage';
 import RecipeDetailsPage from './pages/RecipeDetailsPage';
 import AuthPage from './pages/AuthPage';
 import MyRecipesPage from './pages/MyRecipesPage';
-import ChefProfilePage from './pages/ChefProfilePage'; // <--- NOWY IMPORT
+import ChefProfilePage from './pages/ChefProfilePage';
 
 // Importy Komponentów UI
 import NavBar from './components/ui/NavBar';
@@ -26,10 +27,16 @@ function ProtectedRoute({ children }) {
     }
   }, [user, loading, navigate]);
 
+  // Podczas ładowania auth pokazujemy spinner
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader /></div>; 
 
   return user ? children : null;
 }
+
+// <--- Walidacja typów dla ProtectedRoute (Naprawa błędu Lintera)
+ProtectedRoute.propTypes = {
+  children: PropTypes.node
+};
 
 export default function App() {
   return (
@@ -45,16 +52,17 @@ export default function App() {
             {/* --- TRASY PUBLICZNE --- */}
             <Route path="/" element={<RecipeListPage />} />
             <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
-            <Route path="/chef/:id" element={<ChefProfilePage />} /> {/* <--- NOWA TRASA */}
+            <Route path="/chef/:id" element={<ChefProfilePage />} />
             <Route path="/auth" element={<AuthPage />} />
 
-            {/* --- TRASY PRYWATNE --- */}
+            {/* --- TRASY PRYWATNE (WYMAGAJĄ LOGOWANIA) --- */}
             <Route path="/add" element={
               <ProtectedRoute>
                 <AddRecipePage />
               </ProtectedRoute>
             } />
             
+            {/* Ta sama strona AddRecipePage obsługuje teraz edycję! */}
             <Route path="/edit/:id" element={
               <ProtectedRoute>
                 <AddRecipePage />

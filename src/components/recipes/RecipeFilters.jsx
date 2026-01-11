@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types'; // <--- IMPORT
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import Button from '../ui/Button';
+// Button usunięty bo był nieużywany
 
 const CATEGORIES = ['Śniadanie', 'Obiad', 'Kolacja', 'Deser', 'Przekąska', 'Napój'];
 const SORT_OPTIONS = [
@@ -31,7 +32,6 @@ export default function RecipeFilters({ filters, setFilters, onClear }) {
         )}
       </div>
 
-      {/* 1. Słowa kluczowe */}
       <div>
         <Input 
           placeholder="Szukaj przepisu lub składnika..." 
@@ -41,7 +41,6 @@ export default function RecipeFilters({ filters, setFilters, onClear }) {
         />
       </div>
 
-      {/* 2. Kategoria */}
       <div>
         <Select
           label="Kategoria"
@@ -53,7 +52,6 @@ export default function RecipeFilters({ filters, setFilters, onClear }) {
         />
       </div>
 
-      {/* 3. Czas przygotowania (Suwak) */}
       <div>
         <div className="flex justify-between text-sm font-bold text-gray-700 mb-2">
           <label>Maks. czas</label>
@@ -76,7 +74,6 @@ export default function RecipeFilters({ filters, setFilters, onClear }) {
         </div>
       </div>
 
-      {/* 4. Sortowanie */}
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-1 ml-1">Sortuj według</label>
         <div className="grid grid-cols-2 gap-2">
@@ -99,3 +96,15 @@ export default function RecipeFilters({ filters, setFilters, onClear }) {
     </div>
   );
 }
+
+// Dodajemy walidację typów (Clean Code wymóg)
+RecipeFilters.propTypes = {
+  filters: PropTypes.shape({
+    query: PropTypes.string,
+    category: PropTypes.string,
+    maxTime: PropTypes.number,
+    sort: PropTypes.string,
+  }).isRequired,
+  setFilters: PropTypes.func.isRequired,
+  onClear: PropTypes.func.isRequired,
+};

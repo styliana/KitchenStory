@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types'; // <--- IMPORT
 
 export default function Loader({ size = "medium", className = "" }) {
   const sizes = {
@@ -13,3 +14,8 @@ export default function Loader({ size = "medium", className = "" }) {
     </div>
   );
 }
+
+Loader.propTypes = {
+  size: PropTypes.oneOf(['small', 'medium', 'large']),
+  className: PropTypes.string
+};
