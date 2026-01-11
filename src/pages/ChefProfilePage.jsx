@@ -34,6 +34,12 @@ export default function ChefProfilePage() {
         setProfile(profileData);
         setRecipes(recipesData || []);
       }
+
+      // <--- NAPRAWA 1: Używamy zmiennej recipesError (np. logujemy ją)
+      if (recipesError) {
+        console.error("Błąd pobierania przepisów kucharza:", recipesError);
+      }
+
       setLoading(false);
     }
 
@@ -63,7 +69,8 @@ export default function ChefProfilePage() {
           </p>
           
           {profile.bio && (
-            <p className="mt-4 text-gray-600 italic max-w-lg mx-auto">"{profile.bio}"</p>
+            // <--- NAPRAWA 2: Zamiana cudzysłowów " na encje &quot;
+            <p className="mt-4 text-gray-600 italic max-w-lg mx-auto">&quot;{profile.bio}&quot;</p>
           )}
 
           <div className="mt-6 flex justify-center gap-8">
