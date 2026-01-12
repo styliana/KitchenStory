@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types'; // <--- Dodano import PropTypes
+import PropTypes from 'prop-types';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Importy Stron
@@ -10,13 +10,13 @@ import RecipeDetailsPage from './pages/RecipeDetailsPage';
 import AuthPage from './pages/AuthPage';
 import MyRecipesPage from './pages/MyRecipesPage';
 import ChefProfilePage from './pages/ChefProfilePage';
+import SettingsPage from './pages/SettingsPage'; // <--- NOWY IMPORT
 
-// Importy Komponentów UI
+// UI
 import NavBar from './components/ui/NavBar';
 import Footer from './components/ui/Footer';
 import Loader from './components/ui/Loader';
 
-// Komponent chroniący trasy (Guard)
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -27,13 +27,11 @@ function ProtectedRoute({ children }) {
     }
   }, [user, loading, navigate]);
 
-  // Podczas ładowania auth pokazujemy spinner
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader /></div>; 
 
   return user ? children : null;
 }
 
-// <--- Walidacja typów dla ProtectedRoute (Naprawa błędu Lintera)
 ProtectedRoute.propTypes = {
   children: PropTypes.node
 };
@@ -42,44 +40,43 @@ export default function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen flex flex-col bg-orange-50/30 font-sans text-gray-800">
-        
-        {/* Nawigacja */}
         <NavBar />
 
-        {/* Główny kontener */}
         <main className="flex-grow w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
           <Routes>
-            {/* --- TRASY PUBLICZNE --- */}
             <Route path="/" element={<RecipeListPage />} />
             <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
             <Route path="/chef/:id" element={<ChefProfilePage />} />
             <Route path="/auth" element={<AuthPage />} />
 
-            {/* --- TRASY PRYWATNE (WYMAGAJĄ LOGOWANIA) --- */}
+            {/* TRASY CHRONIONE */}
             <Route path="/add" element={
               <ProtectedRoute>
                 <AddRecipePage />
               </ProtectedRoute>
             } />
-            
-            {/* Ta sama strona AddRecipePage obsługuje teraz edycję! */}
             <Route path="/edit/:id" element={
               <ProtectedRoute>
                 <AddRecipePage />
               </ProtectedRoute>
             } />
-            
             <Route path="/my-recipes" element={
               <ProtectedRoute>
                 <MyRecipesPage />
               </ProtectedRoute>
             } />
+            
+            {/* NOWA TRASA */}
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
+            
           </Routes>
         </main>
 
-        {/* Stopka */}
         <Footer />
-        
       </div>
     </AuthProvider>
   );
