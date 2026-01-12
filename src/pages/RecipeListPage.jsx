@@ -6,7 +6,6 @@ import RecipeCard from '../components/recipes/RecipeCard';
 import RecipeFilters from '../components/recipes/RecipeFilters';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
-// Link usunięty
 
 export default function RecipeListPage() {
   const [recipes, setRecipes] = useState([]);
@@ -92,18 +91,24 @@ export default function RecipeListPage() {
 
   return (
     <div>
-      <div className="text-center mb-10">
-        <h2 className="text-4xl font-bold text-gray-800 mb-2 font-serif">Książka Kucharska</h2>
-        <p className="text-gray-600 max-w-lg mx-auto">
-          Znajdź idealny przepis na dziś, przeglądając kolekcję społeczności.
+      {/* Nagłówek sekcji */}
+      <div className="text-center mb-16">
+        <h2 className="text-5xl font-bold text-gray-900 mb-4 font-serif tracking-tight">
+          Książka Kucharska
+        </h2>
+        <p className="text-lg text-gray-500 max-w-lg mx-auto leading-relaxed">
+          Odkryj smaki stworzone przez społeczność. Znajdź inspirację na dzisiejszy posiłek.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
-        <aside className="lg:sticky lg:top-24">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 items-start">
+        
+        {/* LEWA KOLUMNA: FILTRY (Sticky) */}
+        <aside className="lg:sticky lg:top-28">
            <RecipeFilters filters={filters} setFilters={setFilters} onClear={clearFilters} />
         </aside>
 
+        {/* PRAWA KOLUMNA: WYNIKI */}
         <div>
            {!usingSupabase && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded text-red-800 shadow-sm">
@@ -113,20 +118,21 @@ export default function RecipeListPage() {
            )}
 
            {loading ? (
-             <div className="flex justify-center py-20 bg-white/50 rounded-3xl min-h-[300px] items-center">
+             <div className="flex justify-center py-20 bg-white/50 rounded-3xl min-h-[400px] items-center">
                <Loader size="large" />
              </div>
            ) : recipes.length === 0 ? (
-             <div className="text-center py-20 bg-white rounded-3xl border border-orange-100 shadow-sm">
-               <span className="text-5xl block mb-4 opacity-50">🔍</span>
-               <h3 className="text-xl font-bold text-gray-700">Nic nie znaleziono</h3>
-               <p className="text-gray-500 mt-2 mb-6">Spróbuj zmienić parametry wyszukiwania.</p>
+             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+               <span className="text-6xl block mb-6 opacity-30">🍳</span>
+               <h3 className="text-xl font-bold text-gray-900">Nic nie znaleziono</h3>
+               <p className="text-gray-500 mt-2 mb-8">Nie mamy przepisu pasującego do Twoich filtrów.</p>
                <Button variant="secondary" onClick={clearFilters}>
                  Wyczyść wszystkie filtry
                </Button>
              </div>
            ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-fade-in-up">
+             /* ZMIANA: Nowoczesny Grid (gap-8, gap-y-12) */
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-12 animate-fade-in-up">
                {recipes.map((r) => (
                  <RecipeCard key={r.id} recipe={r} />
                ))}

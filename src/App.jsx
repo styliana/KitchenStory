@@ -10,13 +10,14 @@ import RecipeDetailsPage from './pages/RecipeDetailsPage';
 import AuthPage from './pages/AuthPage';
 import MyRecipesPage from './pages/MyRecipesPage';
 import ChefProfilePage from './pages/ChefProfilePage';
-import SettingsPage from './pages/SettingsPage'; // <--- NOWY IMPORT
+import SettingsPage from './pages/SettingsPage';
 
-// UI
+// Importy Komponentów UI
 import NavBar from './components/ui/NavBar';
 import Footer from './components/ui/Footer';
 import Loader from './components/ui/Loader';
 
+// Guard
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -39,44 +40,48 @@ ProtectedRoute.propTypes = {
 export default function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col bg-orange-50/30 font-sans text-gray-800">
+      <div className="min-h-screen flex flex-col bg-gray-50/50 font-sans text-gray-800 selection:bg-orange-100 selection:text-orange-900">
+        
         <NavBar />
 
-        <main className="flex-grow w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* ZMIANA: Szerszy kontener (max-w-7xl) i większy padding (py-12) */}
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Routes>
+            {/* PUBLICZNE */}
             <Route path="/" element={<RecipeListPage />} />
             <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
             <Route path="/chef/:id" element={<ChefProfilePage />} />
             <Route path="/auth" element={<AuthPage />} />
 
-            {/* TRASY CHRONIONE */}
+            {/* PRYWATNE */}
             <Route path="/add" element={
               <ProtectedRoute>
                 <AddRecipePage />
               </ProtectedRoute>
             } />
+            
             <Route path="/edit/:id" element={
               <ProtectedRoute>
                 <AddRecipePage />
               </ProtectedRoute>
             } />
+            
             <Route path="/my-recipes" element={
               <ProtectedRoute>
                 <MyRecipesPage />
               </ProtectedRoute>
             } />
             
-            {/* NOWA TRASA */}
             <Route path="/settings" element={
               <ProtectedRoute>
                 <SettingsPage />
               </ProtectedRoute>
             } />
-            
           </Routes>
         </main>
 
         <Footer />
+        
       </div>
     </AuthProvider>
   );
